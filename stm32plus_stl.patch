@@ -1,0 +1,231 @@
+diff --git a/SConstruct b/SConstruct
+index 798707ca..583d029b 100644
+--- a/SConstruct
++++ b/SConstruct
+@@ -162,7 +162,7 @@ env.Replace(RANLIB="arm-none-eabi-ranlib")
+
+ # set the include directories
+
+-env.Append(CPPPATH=["#lib/include","#lib/include/stl","#lib"])
++env.Append(CPPPATH=["#lib/include","#lib"])
+
+ # create the C and C++ flags that are needed. We can't use the extra or pedantic errors on the ST library code.
+
+diff --git a/cmake/stm32plus-config-specific.cmake.in b/cmake/stm32plus-config-specific.cmake.in
+index 13f98edd..010780fb 100644
+--- a/cmake/stm32plus-config-specific.cmake.in
++++ b/cmake/stm32plus-config-specific.cmake.in
+@@ -27,10 +27,8 @@ add_definitions("-DSTM32PLUS_BUILD")
+ set(STM32PLUS_INSTALLDIR "${INSTALLDIR}" CACHE INTERNAL "stm32plus installdir")
+ set(STM32PLUS_LIBS "${INSTALLDIR}/lib/%(INSTALLDIR_PREFIX)s/%(LIBSTM32PLUS)s" CACHE INTERNAL "library location")
+
+-# These paths cover your bases if you're using pure stm32plus interfaces.
+-set(STM32PLUS_INCLUDE_DIRS
+-  ${INSTALLDIR}/include/%(INSTALLDIR_PREFIX)s/
+-  ${INSTALLDIR}/include/%(INSTALLDIR_PREFIX)s/stl)
++# This cover your bases if you're using pure stm32plus interfaces.
++set(STM32PLUS_INCLUDE_DIRS ${INSTALLDIR}/include/%(INSTALLDIR_PREFIX)s/)
+
+ # You'll need include paths under here if you're calling into stdperiph or cmsis directly.
+ set(STM32PLUS_FWLIB_DIR ${INSTALLDIR}/include/%(INSTALLDIR_PREFIX)s/fwlib)
+diff --git a/lib/include/config/event.h b/lib/include/config/event.h
+index 9d5778e0..746b0c4d 100644
+--- a/lib/include/config/event.h
++++ b/lib/include/config/event.h
+@@ -14,14 +14,7 @@
+  * class that raises them.
+  */
+
+-// event depends on stl slist
+-// some implementation contain slist in ext/slist
+-#include "iterator"
+-#ifdef EXT_SLIST
+-    #include "ext/slist"
+-#else
+-    #include "slist"
+-#endif
++#include "ext/slist"
+
+ // include the event/slot signal classes
+
+diff --git a/lib/include/config/net.h b/lib/include/config/net.h
+index fc0a21d2..5d8af541 100644
+--- a/lib/include/config/net.h
++++ b/lib/include/config/net.h
+@@ -33,7 +33,7 @@
+ #include "memory/linked_ptr.h"
+ #include "util/Meta.h"
+ #include "iterator"
+-#include "slist"
++#include "ext/slist"
+ #include "vector"
+ #include "list"
+ #include "algorithm"
+diff --git a/lib/include/config/usb/device/device.h b/lib/include/config/usb/device/device.h
+index f7339a37..0a138c7d 100644
+--- a/lib/include/config/usb/device/device.h
++++ b/lib/include/config/usb/device/device.h
+@@ -16,7 +16,6 @@
+   #include "config/event.h"
+   #include "config/nvic.h"
+   #include "util/BitHacks.h"
+-  #include "util/StdExt.h"
+
+   // core includes
+
+@@ -64,7 +63,6 @@
+   #include "config/rcc.h"
+   #include "config/exti.h"
+   #include "util/Meta.h"
+-  #include "util/StdExt.h"
+
+   #include "usb/f4/device/HalUsbdStatus.h"
+
+@@ -139,4 +137,3 @@
+   #include "usb/f4/device/features/InterfaceTextFeature.h"
+
+ #endif
+-
+diff --git a/lib/include/event/signal.h b/lib/include/event/signal.h
+index 8c653654..f3d4ebdb 100644
+--- a/lib/include/event/signal.h
++++ b/lib/include/event/signal.h
+@@ -43,11 +43,7 @@ namespace wink {
+       typedef Slot slot_type;
+
+       slot_type _firstSlot;
+-#ifdef EXT_SLIST
+       __gnu_cxx::slist<slot_type> _slots;
+-#else
+-      std::slist<slot_type> _slots;
+-#endif
+     public:
+
+       /// Connects a slot to the signal
+diff --git a/lib/include/net/NetworkIntervalTicker.h b/lib/include/net/NetworkIntervalTicker.h
+index a575561d..571effad 100644
+--- a/lib/include/net/NetworkIntervalTicker.h
++++ b/lib/include/net/NetworkIntervalTicker.h
+@@ -69,7 +69,7 @@ namespace stm32plus {
+
+         RtcBase *_rtc;
+         RtcSecondInterruptFeature *_rtcInterruptFeature;
+-        std::slist<SubscriberInfo> _subscribers;
++        __gnu_cxx::slist<SubscriberInfo> _subscribers;
+         bool _ready;
+
+       protected:
+diff --git a/lib/include/net/application/http/HttpClient.h b/lib/include/net/application/http/HttpClient.h
+index d0e454f8..320eb622 100644
+--- a/lib/include/net/application/http/HttpClient.h
++++ b/lib/include/net/application/http/HttpClient.h
+@@ -28,14 +28,14 @@ namespace stm32plus {
+       protected:
+         TcpConnection& _conn;                       ///< reference to the TCP connection
+
+-        std::slist<std::string> _requestHeaders;    ///< headers to set on the request
++        __gnu_cxx::slist<std::string> _requestHeaders;    ///< headers to set on the request
+         HttpVersion _httpVersion;                   ///< protocol version, default is 1.1
+         HttpMethod _httpMethod;                     ///< method, default is GET
+         std::string _uri;                           ///< URI for the request (no host and no protocol)
+         std::string _host;                          ///< the Host: header value (mandatory for HTTP/1.1)
+
+         uint16_t _maxResponseHeaderLineLength;      ///< maximum length of a response header line before we truncate it. default is 100.
+-        std::slist<std::string> _responseHeaders;   ///< response header list
++        __gnu_cxx::slist<std::string> _responseHeaders;   ///< response header list
+         uint16_t _responseCode;                     ///< HTTP response code number
+         int32_t _responseContentLength;             ///< content length of response, or -1 if server not sent
+         std::string _responseContentType;           ///< response content type, or empty if server not sent
+@@ -56,7 +56,7 @@ namespace stm32plus {
+         uint16_t getResponseCode() const;
+         int32_t getResponseContentLength() const;
+         const std::string& getResponseContentType() const;
+-        const std::slist<std::string>& getResponseHeaders() const;
++        const __gnu_cxx::slist<std::string>& getResponseHeaders() const;
+     };
+
+
+@@ -335,7 +335,7 @@ namespace stm32plus {
+      * @return The last response headers
+      */
+
+-    inline const std::slist<std::string>& HttpClient::getResponseHeaders() const {
++    inline const __gnu_cxx::slist<std::string>& HttpClient::getResponseHeaders() const {
+       return _responseHeaders;
+     }
+
+diff --git a/lib/include/net/network/ip/features/IpPacketReassemblerFeature.h b/lib/include/net/network/ip/features/IpPacketReassemblerFeature.h
+index e7d441ec..b079a8b8 100644
+--- a/lib/include/net/network/ip/features/IpPacketReassemblerFeature.h
++++ b/lib/include/net/network/ip/features/IpPacketReassemblerFeature.h
+@@ -56,7 +56,7 @@ namespace stm32plus {
+
+       private:
+         Parameters _params;
+-        std::slist<IpFragmentedPacket *> _frags;
++        __gnu_cxx::slist<IpFragmentedPacket *> _frags;
+         uint32_t _totalFragmentSize;
+         uint32_t _inFlightPacketCount;
+         NetworkUtilityObjects *_utilityObjects;
+diff --git a/lib/include/net/transport/tcp/Tcp.h b/lib/include/net/transport/tcp/Tcp.h
+index 8dfe2fab..1d732f99 100644
+--- a/lib/include/net/transport/tcp/Tcp.h
++++ b/lib/include/net/transport/tcp/Tcp.h
+@@ -60,7 +60,7 @@ namespace stm32plus {
+       protected:
+         Parameters _params;
+         uint16_t _serverCount;
+-        std::slist<TcpClosingConnectionState> _closingConnections;
++        __gnu_cxx::slist<TcpClosingConnectionState> _closingConnections;
+
+       protected:
+         void onNotification(NetEventDescriptor& ned);
+@@ -190,7 +190,7 @@ namespace stm32plus {
+
+       // check if this segment is for one of the closing connections
+
+-      std::slist<TcpClosingConnectionState>::iterator it,previt;
++      __gnu_cxx::slist<TcpClosingConnectionState>::iterator it,previt;
+       bool notfound;
+
+       {
+@@ -338,7 +338,7 @@ namespace stm32plus {
+     template<class TNetworkLayer>
+     inline void Tcp<TNetworkLayer>::onTick(NetworkIntervalTickData& nitd) {
+
+-      std::slist<TcpClosingConnectionState>::iterator previt,it;
++      __gnu_cxx::slist<TcpClosingConnectionState>::iterator previt,it;
+
+       // iterate the closing connections
+
+@@ -412,7 +412,7 @@ namespace stm32plus {
+
+       // add to the list (struct copy)
+
+-      std::slist<TcpClosingConnectionState>::iterator it;
++      __gnu_cxx::slist<TcpClosingConnectionState>::iterator it;
+
+       {
+         IrqSuspend suspender;
+@@ -774,4 +774,3 @@ namespace stm32plus {
+     }
+   }
+ }
+-
+diff --git a/lib/include/stream/TextOutputStream.h b/lib/include/stream/TextOutputStream.h
+index a71a2cd9..1b971ff1 100644
+--- a/lib/include/stream/TextOutputStream.h
++++ b/lib/include/stream/TextOutputStream.h
+@@ -6,6 +6,7 @@
+
+ #pragma once
+
++#include "string/StringUtil.h"
+
+ namespace stm32plus {
+
+@@ -205,4 +206,3 @@ namespace stm32plus {
+     return _stream.flush();
+   }
+ }
+-
