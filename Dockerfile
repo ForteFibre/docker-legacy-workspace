@@ -35,7 +35,7 @@ ENV STM32PLUS_DIR=$STM32PLUS_DIR_BASENAME/stm32plus
 
 WORKDIR /tmp
 COPY --from=stlink-builder /tmp/stlink/stlink*.deb stlink.deb
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gdb-multiarch libusb-1.0-0 ./stlink.deb \
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends screen gdb-multiarch libusb-1.0-0 ./stlink.deb \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/* /var/lib/apt/lists/*
